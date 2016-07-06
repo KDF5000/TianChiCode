@@ -1,10 +1,16 @@
 package com.alibaba.middleware.race.jstorm;
 
 import backtype.storm.Config;
+import backtype.storm.LocalCluster;
 import backtype.storm.StormSubmitter;
 import backtype.storm.topology.TopologyBuilder;
 import backtype.storm.tuple.Fields;
 import com.alibaba.middleware.race.RaceConfig;
+import com.alibaba.middleware.race.jstorm.bolt.FilterMessageBolt;
+import com.alibaba.middleware.race.jstorm.bolt.RatioBolt;
+import com.alibaba.middleware.race.jstorm.bolt.StatPayBolt;
+
+//import org.apache.velocity.runtime.directive.Macro;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,23 +33,32 @@ public class RaceTopology {
 
     public static void main(String[] args) throws Exception {
 
-        Config conf = new Config();
+        Config config = new Config();
         int spout_Parallelism_hint = 1;
-        int split_Parallelism_hint = 2;
-        int count_Parallelism_hint = 2;
-
+        int stat_Parallelism_hint = 1;
+        int filter_Parallelism_hint = 2;
         TopologyBuilder builder = new TopologyBuilder();
 
-        builder.setSpout("spout", new RaceSentenceSpout(), spout_Parallelism_hint);
-        builder.setBolt("split", new SplitSentence(), split_Parallelism_hint).shuffleGrouping("spout");
-        builder.setBolt("count", new WordCount(), count_Parallelism_hint).fieldsGrouping("split", new Fields("word"));
+        builder.setSpout("spout", new MqSpout(), spout_Parallelism_hint);
+        builder.setBolt("filter", new FilterMessageBolt(), filter_Parallelism_hint).fieldsGrouping("spout", new Fields("orderId"));
+        builder.setBolt("stat", new StatPayBolt(), stat_Parallelism_hint).shuffleGrouping("filter");
+        builder.setBolt("ratioStat", new RatioBolt(), 2).fieldsGrouping("filter", new Fields("platform"));
         String topologyName = RaceConfig.JstormTopologyName;
 
-        try {
-            StormSubmitter.submitTopology(topologyName, conf, builder.createTopology());
-        } catch (Exception e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+      //通过是否有参数来控制是否启动集群，或者本地模式执行
+        if (args != null && args.length > 0) {
+            try {
+                config.setNumWorkers(1);
+                StormSubmitter.submitTopology(args[0], config,
+                        builder.createTopology());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        } else {
+        	config.setDebug(false);
+            config.setMaxTaskParallelism(1);
+            LocalCluster cluster = new LocalCluster();
+            cluster.submitTopology(topologyName, config, builder.createTopology());
         }
     }
 }

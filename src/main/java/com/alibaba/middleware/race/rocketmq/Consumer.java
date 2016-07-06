@@ -33,9 +33,11 @@ public class Consumer {
         consumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_FIRST_OFFSET);
 
         //在本地搭建好broker后,记得指定nameServer的地址
-        //consumer.setNamesrvAddr("127.0.0.1:9876");
+        consumer.setNamesrvAddr("172.16.2.129:9876");
 
         consumer.subscribe(RaceConfig.MqPayTopic, "*");
+        consumer.subscribe(RaceConfig.MqTmallTradeTopic, "*");
+		consumer.subscribe(RaceConfig.MqTaobaoTradeTopic, "*");
 
         consumer.registerMessageListener(new MessageListenerConcurrently() {
 
@@ -50,9 +52,14 @@ public class Consumer {
                         System.out.println("Got the end signal");
                         continue;
                     }
-
-                    PaymentMessage paymentMessage = RaceUtils.readKryoObject(PaymentMessage.class, body);
-                    System.out.println(paymentMessage);
+                    if(msg.getTopic().equals(RaceConfig.MqPayTopic)){
+                    	PaymentMessage paymentMessage = RaceUtils.readKryoObject(PaymentMessage.class, body);
+                        System.out.println(paymentMessage);
+                    }else{
+                    	OrderMessage orderMessage = RaceUtils.readKryoObject(OrderMessage.class, body);
+                    	System.out.println(orderMessage);
+                    }
+                    
                 }
                 return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
             }

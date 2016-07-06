@@ -21,7 +21,7 @@ import java.util.concurrent.Semaphore;
 public class Producer {
 
     private static Random rand = new Random();
-    private static int count = 1000;
+    private static int count = 10;
 
     /**
      * 这是一个模拟堆积消息的程序，生成的消息模型和我们比赛的消息模型是一样的，
@@ -34,7 +34,7 @@ public class Producer {
         DefaultMQProducer producer = new DefaultMQProducer("please_rename_unique_group_name");
 
         //在本地搭建好broker后,记得指定nameServer的地址
-        //producer.setNamesrvAddr("127.0.0.1:9876");
+        producer.setNamesrvAddr("172.16.2.129:9876");
 
         producer.start();
 
