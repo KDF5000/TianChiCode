@@ -1,5 +1,7 @@
 package com.alibaba.middleware.race;
 
+import java.math.BigDecimal;
+
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
@@ -29,6 +31,12 @@ public class RaceUtils {
         input.close();
         T ret = kryo.readObject(input, tClass);
         return ret;
+    }
+    
+    public static Double round(double value, int decemial){
+    	BigDecimal bd = new BigDecimal(value);
+    	BigDecimal  bd2 = bd.setScale(decemial,BigDecimal.ROUND_HALF_UP);
+    	return Double.parseDouble(bd2.toString());
     }
 
 }

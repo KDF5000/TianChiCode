@@ -29,14 +29,15 @@ public class MqConsumerFactory {
         
         consumer = new DefaultMQPushConsumer(RaceConfig.MetaConsumerGroup);
         
-//        consumer.setNamesrvAddr(RaceConfig.MqNameServer);
+        consumer.setNamesrvAddr(RaceConfig.MqNameServer);
         String instanceName = RaceConfig.MqGroup +"@" +	JStormUtils.process_pid();
 		consumer.setInstanceName(instanceName);
-		consumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_LAST_OFFSET);
+//		consumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_FIRST_OFFSET);
 		
+		consumer.subscribe(RaceConfig.MqPayTopic, "*");
 		consumer.subscribe(RaceConfig.MqTmallTradeTopic, "*");
 		consumer.subscribe(RaceConfig.MqTaobaoTradeTopic, "*");
-		consumer.subscribe(RaceConfig.MqPayTopic, "*");
+		
 		consumer.registerMessageListener(listener);
 
 		consumer.start();

@@ -35,12 +35,11 @@ public class FilterMessageBolt implements IRichBolt {
 		if(dataTuple.getType() == DataTuple.MQ_TMALL_ORDER || dataTuple.getType() == DataTuple.MQ_TAOBAO_ORDER){
 			//放到tair里 key为订单id，然后放到tair里
 			System.out.println("订单放到Tair->OrderId: "+ dataTuple.getOrderMessage().getOrderId()+" Type: "+dataTuple.getType());
-			System.out.println(this.tairOperator.write(dataTuple.getOrderMessage().getOrderId(), dataTuple.getType()));
+			this.tairOperator.write(dataTuple.getOrderMessage().getOrderId(), dataTuple.getType());
 		}else{
 			//支付消息，传到下一个bolt处理 统计
 			System.out.println("emit 支付消息: "+dataTuple.getPayMessage().getOrderId());
 			this.collector.emit(new Values(dataTuple.getPayMessage(), dataTuple.getPayMessage().getPayPlatform()));
-			
 		}
 		this.collector.ack(input);
 	}

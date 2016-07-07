@@ -6,6 +6,7 @@ import backtype.storm.StormSubmitter;
 import backtype.storm.topology.TopologyBuilder;
 import backtype.storm.tuple.Fields;
 import com.alibaba.middleware.race.RaceConfig;
+import com.alibaba.middleware.race.RaceUtils;
 import com.alibaba.middleware.race.jstorm.bolt.FilterMessageBolt;
 import com.alibaba.middleware.race.jstorm.bolt.RatioBolt;
 import com.alibaba.middleware.race.jstorm.bolt.StatPayBolt;
@@ -32,10 +33,9 @@ public class RaceTopology {
 
 
     public static void main(String[] args) throws Exception {
-
         Config config = new Config();
-        int spout_Parallelism_hint = 1;
-        int stat_Parallelism_hint = 1;
+        int spout_Parallelism_hint = 3;
+        int stat_Parallelism_hint = 2;
         int filter_Parallelism_hint = 2;
         TopologyBuilder builder = new TopologyBuilder();
 

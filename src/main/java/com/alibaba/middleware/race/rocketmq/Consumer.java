@@ -4,7 +4,10 @@ import com.alibaba.middleware.race.RaceConfig;
 import com.alibaba.rocketmq.client.consumer.DefaultMQPushConsumer;
 import com.alibaba.rocketmq.client.consumer.listener.ConsumeConcurrentlyContext;
 import com.alibaba.rocketmq.client.consumer.listener.ConsumeConcurrentlyStatus;
+import com.alibaba.rocketmq.client.consumer.listener.ConsumeOrderlyContext;
+import com.alibaba.rocketmq.client.consumer.listener.ConsumeOrderlyStatus;
 import com.alibaba.rocketmq.client.consumer.listener.MessageListenerConcurrently;
+import com.alibaba.rocketmq.client.consumer.listener.MessageListenerOrderly;
 import com.alibaba.rocketmq.client.exception.MQClientException;
 import com.alibaba.rocketmq.common.consumer.ConsumeFromWhere;
 import com.alibaba.rocketmq.common.message.MessageExt;
@@ -24,7 +27,7 @@ import java.util.List;
 public class Consumer {
 
     public static void main(String[] args) throws InterruptedException, MQClientException {
-        DefaultMQPushConsumer consumer = new DefaultMQPushConsumer("please_rename_unique_group_name_4");
+        DefaultMQPushConsumer consumer = new DefaultMQPushConsumer("429038utrh");
 
         /**
          * 设置Consumer第一次启动是从队列头部开始消费还是队列尾部开始消费<br>
@@ -39,12 +42,12 @@ public class Consumer {
         consumer.subscribe(RaceConfig.MqTmallTradeTopic, "*");
 		consumer.subscribe(RaceConfig.MqTaobaoTradeTopic, "*");
 
-        consumer.registerMessageListener(new MessageListenerConcurrently() {
-
-            @Override
-            public ConsumeConcurrentlyStatus consumeMessage(List<MessageExt> msgs,
-                                                            ConsumeConcurrentlyContext context) {
-                for (MessageExt msg : msgs) {
+        consumer.registerMessageListener(new MessageListenerOrderly() {
+			
+			@Override
+			public ConsumeOrderlyStatus consumeMessage(List<MessageExt> msgs, ConsumeOrderlyContext context) {
+				// TODO Auto-generated method stub
+				for (MessageExt msg : msgs) {
 
                     byte [] body = msg.getBody();
                     if (body.length == 2 && body[0] == 0 && body[1] == 0) {
@@ -61,9 +64,9 @@ public class Consumer {
                     }
                     
                 }
-                return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
-            }
-        });
+                return ConsumeOrderlyStatus.SUCCESS;
+			}
+		});
 
         consumer.start();
 

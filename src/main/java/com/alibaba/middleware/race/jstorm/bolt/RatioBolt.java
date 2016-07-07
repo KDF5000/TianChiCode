@@ -3,6 +3,7 @@ package com.alibaba.middleware.race.jstorm.bolt;
 import java.util.Map;
 
 import com.alibaba.middleware.race.RaceConfig;
+import com.alibaba.middleware.race.RaceUtils;
 import com.alibaba.middleware.race.Tair.TairOperatorImpl;
 import com.alibaba.middleware.race.model.PaymentMessage;
 
@@ -46,8 +47,8 @@ public class RatioBolt implements IRichBolt{
 				mobileAmount = Double.valueOf(anotherTotal.toString());
 			}
 			this.tairOperator.write("PC_total", newValue);
-			this.tairOperator.write(RaceConfig.prex_ratio+RaceConfig.TeamCode+"_"+timestamp, newValue>0 ? mobileAmount/newValue : 0);
-			System.out.println("Ratio Result: "+ (newValue>0 ? mobileAmount/newValue : 0));
+			this.tairOperator.write(RaceConfig.prex_ratio+RaceConfig.TeamCode+"_"+timestamp, RaceUtils.round((newValue>0 ? mobileAmount/newValue : 0), 2));
+			System.out.println("Ratio Result: "+ RaceUtils.round((newValue>0 ? mobileAmount/newValue : 0), 2));
 		}else{//Mobile
 			Object total = this.tairOperator.get("Mobile_total");
 			double newValue = 0;
@@ -62,8 +63,8 @@ public class RatioBolt implements IRichBolt{
 				pcAmount = Double.valueOf(anotherTotal.toString());
 			}
 			this.tairOperator.write("Mobile_total", newValue);
-			this.tairOperator.write(RaceConfig.prex_ratio+RaceConfig.TeamCode+"_"+timestamp, pcAmount>0 ? newValue/pcAmount : 0);
-			System.out.println("Ratio Result: "+ (pcAmount>0 ? newValue/pcAmount : 0));
+			this.tairOperator.write(RaceConfig.prex_ratio+RaceConfig.TeamCode+"_"+timestamp, RaceUtils.round((pcAmount>0 ? newValue/pcAmount : 0), 2));
+			System.out.println("Ratio Result: "+ RaceUtils.round((pcAmount>0 ? newValue/pcAmount : 0), 2));
 		}
 		this.collector.ack(input);
 	}

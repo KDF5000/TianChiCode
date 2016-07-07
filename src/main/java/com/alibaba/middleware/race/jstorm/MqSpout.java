@@ -43,7 +43,6 @@ public class MqSpout implements IRichSpout, MessageListenerOrderly {
 		this.sendingQueue = new LinkedBlockingDeque<DataTuple>();
 		try {
 			this.consumer = MqConsumerFactory.mkInstance(this);
-			this.consumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_FIRST_OFFSET);
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -87,14 +86,14 @@ public class MqSpout implements IRichSpout, MessageListenerOrderly {
 			return;
 		}
 		dataTuple.updateEmitMs();
-//		if(dataTuple.getType() == DataTuple.MQ_PAY){
-//			try {
-//				Thread.sleep(1000);
-//			} catch (InterruptedException e) {
-//				// TODO Auto-generated catch block
-//				e.printStackTrace();
-//			}
-//		}
+		if(dataTuple.getType() == DataTuple.MQ_PAY){
+			try {
+				Thread.sleep(500);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
 		System.out.println("Emit tuple: "+dataTuple.getOrderId()+","+dataTuple.getType());
 		this.collector.emit(new Values(dataTuple.getOrderId(), dataTuple), dataTuple.getEmitMs());
 	}
@@ -142,16 +141,19 @@ public class MqSpout implements IRichSpout, MessageListenerOrderly {
             	PaymentMessage paymentMessage = RaceUtils.readKryoObject(PaymentMessage.class, body);
             	dataTuple.setPayMessage(paymentMessage);
             	dataTuple.setOrderId(paymentMessage.getOrderId());
+            	System.out.println("Receive Messge: ["+paymentMessage.getOrderId()+","+dataTuple.getType()+"]");
             }else if(topic.equals(RaceConfig.MqTmallTradeTopic)){
             	dataTuple.setType(DataTuple.MQ_TMALL_ORDER);
             	OrderMessage orderMessage = RaceUtils.readKryoObject(OrderMessage.class, body);
             	dataTuple.setOrderMessage(orderMessage);
             	dataTuple.setOrderId(orderMessage.getOrderId());
+            	System.out.println("Receive Messge: ["+orderMessage.getOrderId()+","+dataTuple.getType()+"]");
             }else if( topic.equals(RaceConfig.MqTaobaoTradeTopic)){
             	dataTuple.setType(DataTuple.MQ_TAOBAO_ORDER);
             	OrderMessage orderMessage = RaceUtils.readKryoObject(OrderMessage.class, body);
             	dataTuple.setOrderMessage(orderMessage);
             	dataTuple.setOrderId(orderMessage.getOrderId());
+            	System.out.println("Receive Messge: ["+orderMessage.getOrderId()+","+dataTuple.getType()+"]");
             }else{
             	System.out.println("Unknow message!!!!");
             	continue;
