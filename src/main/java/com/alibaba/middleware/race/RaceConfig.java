@@ -19,14 +19,16 @@ public class RaceConfig implements Serializable {
     public static String MqPayTopic = "MiddlewareRaceTestData_Pay";
     public static String MqTmallTradeTopic = "MiddlewareRaceTestData_TMOrder";
     public static String MqTaobaoTradeTopic = "MiddlewareRaceTestData_TBOrder";
-    public static String TairConfigServer = "172.16.2.128:5198";
-    public static String TairSalveConfigServer = "172.16.2.128:5198";
-//    public static String TairConfigServer = "10.101.72.127:5198";
-//    public static String TairSalveConfigServer = "10.101.72.128:5198";
-//    public static String TairGroup = "group_tianchi";
-//    public static Integer TairNamespace = 40652;
-    public static String TairGroup = "group_1";
-    public static Integer TairNamespace = 1;
+//    public static String TairConfigServer = "172.16.2.128:5198";
+//    public static String TairSalveConfigServer = "172.16.2.128:5198";
+//  public static String TairGroup = "group_1";
+//  public static Integer TairNamespace = 1;
+   
+    public static String TairConfigServer = "10.101.72.127:5198";
+    public static String TairSalveConfigServer = "10.101.72.128:5198";
+    public static String TairGroup = "group_tianchi";
+    public static Integer TairNamespace = 40652;
+
     
     //rocketmq server
     public static String MqNameServer = "172.16.2.129:9876";
