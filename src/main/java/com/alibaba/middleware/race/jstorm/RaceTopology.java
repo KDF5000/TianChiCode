@@ -46,19 +46,19 @@ public class RaceTopology {
         String topologyName = RaceConfig.JstormTopologyName;
 
       //通过是否有参数来控制是否启动集群，或者本地模式执行
-        if (args != null && args.length > 0) {
+        //if (args != null && args.length > 0) {
             try {
                 config.setNumWorkers(1);
-                StormSubmitter.submitTopology(args[0], config,
+                StormSubmitter.submitTopology(topologyName, config,
                         builder.createTopology());
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        } else {
-        	config.setDebug(false);
-            config.setMaxTaskParallelism(1);
-            LocalCluster cluster = new LocalCluster();
-            cluster.submitTopology(topologyName, config, builder.createTopology());
-        }
+       // } else {
+        //	config.setDebug(false);
+        //    config.setMaxTaskParallelism(1);
+        //    LocalCluster cluster = new LocalCluster();
+        //    cluster.submitTopology(topologyName, config, builder.createTopology());
+        //}
     }
 }
