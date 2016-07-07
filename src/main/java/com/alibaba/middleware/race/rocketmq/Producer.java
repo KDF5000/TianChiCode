@@ -21,7 +21,7 @@ import java.util.concurrent.Semaphore;
 public class Producer {
 
     private static Random rand = new Random();
-    private static int count = 10;
+    private static int count = 50;
 
     /**
      * 这是一个模拟堆积消息的程序，生成的消息模型和我们比赛的消息模型是一样的，
@@ -43,6 +43,7 @@ public class Producer {
 
         for (int i = 0; i < count; i++) {
             try {
+            	Thread.sleep(60);
                 final int platform = rand.nextInt(2);
                 final OrderMessage orderMessage = ( platform == 0 ? OrderMessage.createTbaoMessage() : OrderMessage.createTmallMessage());
                 orderMessage.setCreateTime(System.currentTimeMillis());

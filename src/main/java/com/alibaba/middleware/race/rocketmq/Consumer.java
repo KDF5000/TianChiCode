@@ -42,10 +42,10 @@ public class Consumer {
         consumer.subscribe(RaceConfig.MqTmallTradeTopic, "*");
 		consumer.subscribe(RaceConfig.MqTaobaoTradeTopic, "*");
 
-        consumer.registerMessageListener(new MessageListenerOrderly() {
+        consumer.registerMessageListener(new MessageListenerConcurrently() {
 			
 			@Override
-			public ConsumeOrderlyStatus consumeMessage(List<MessageExt> msgs, ConsumeOrderlyContext context) {
+			public ConsumeConcurrentlyStatus consumeMessage(List<MessageExt> msgs, ConsumeConcurrentlyContext context) {
 				// TODO Auto-generated method stub
 				for (MessageExt msg : msgs) {
 
@@ -64,7 +64,7 @@ public class Consumer {
                     }
                     
                 }
-                return ConsumeOrderlyStatus.SUCCESS;
+                return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
 			}
 		});
 

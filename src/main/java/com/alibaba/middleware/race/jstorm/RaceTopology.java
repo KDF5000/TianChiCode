@@ -8,7 +8,10 @@ import backtype.storm.tuple.Fields;
 import com.alibaba.middleware.race.RaceConfig;
 import com.alibaba.middleware.race.RaceUtils;
 import com.alibaba.middleware.race.jstorm.bolt.FilterMessageBolt;
+import com.alibaba.middleware.race.jstorm.bolt.OrderReflectBolt;
+import com.alibaba.middleware.race.jstorm.bolt.PayStatBolt;
 import com.alibaba.middleware.race.jstorm.bolt.RatioBolt;
+import com.alibaba.middleware.race.jstorm.bolt.RatioStatBolt;
 import com.alibaba.middleware.race.jstorm.bolt.StatPayBolt;
 
 //import org.apache.velocity.runtime.directive.Macro;
@@ -34,31 +37,34 @@ public class RaceTopology {
 
     public static void main(String[] args) throws Exception {
         Config config = new Config();
-        int spout_Parallelism_hint = 3;
+        int spout_Parallelism_hint = 2;
         int stat_Parallelism_hint = 2;
         int filter_Parallelism_hint = 2;
         TopologyBuilder builder = new TopologyBuilder();
 
-        builder.setSpout("spout", new MqSpout(), spout_Parallelism_hint);
-        builder.setBolt("filter", new FilterMessageBolt(), filter_Parallelism_hint).fieldsGrouping("spout", new Fields("orderId"));
-        builder.setBolt("stat", new StatPayBolt(), stat_Parallelism_hint).shuffleGrouping("filter");
-        builder.setBolt("ratioStat", new RatioBolt(), 2).fieldsGrouping("filter", new Fields("platform"));
+        builder.setSpout("spout", new RocketMqSpout(), 2);
+        builder.setBolt("stat", new PayStatBolt(), 2).fieldsGrouping("spout", "pay_stream", new Fields("orderId"));
+        builder.setBolt("reflect", new OrderReflectBolt(), 3).shuffleGrouping("spout","order_stream");
+//        builder.setBolt("filter", new FilterMessageBolt(), filter_Parallelism_hint).fieldsGrouping("spout", new Fields("orderId"));
+//        builder.setBolt("stat", new StatPayBolt(), stat_Parallelism_hint).shuffleGrouping("filter");
+//        builder.setBolt("ratioStat", new RatioBolt(), 2).fieldsGrouping("filter", new Fields("platform"));
+//        builder.setBolt("test", new RatioStatBolt(),2).fieldsGrouping("spout", "ratio_out", new Fields("platform"));
         String topologyName = RaceConfig.JstormTopologyName;
 
       //通过是否有参数来控制是否启动集群，或者本地模式执行
-        if (args != null && args.length > 0) {
+//        if (args != null && args.length > 0) {
             try {
                 config.setNumWorkers(1);
-                StormSubmitter.submitTopology(args[0], config,
+                StormSubmitter.submitTopology(topologyName, config,
                         builder.createTopology());
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        } else {
-        	config.setDebug(false);
-            config.setMaxTaskParallelism(1);
-            LocalCluster cluster = new LocalCluster();
-            cluster.submitTopology(topologyName, config, builder.createTopology());
-        }
+//        } else {
+//        	config.setDebug(false);
+//          config.setMaxTaskParallelism(1);
+//          LocalCluster cluster = new LocalCluster();
+//          cluster.submitTopology(topologyName, config, builder.createTopology());
+//        }
     }
 }

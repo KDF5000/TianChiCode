@@ -28,8 +28,9 @@ import backtype.storm.topology.IRichSpout;
 import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Values;
+import clojure.main;
 
-public class MqSpout implements IRichSpout, MessageListenerConcurrently {
+public class RocketMqSpout implements IRichSpout, MessageListenerConcurrently {
 	private static final long serialVersionUID = 1L;
 	protected transient DefaultMQPushConsumer consumer; //消费者
 	protected transient LinkedBlockingDeque<DataTuple> sendingQueue; // 消息队列
@@ -89,23 +90,18 @@ public class MqSpout implements IRichSpout, MessageListenerConcurrently {
 		if(dataTuple == null){
 			return;
 		}
-//		if(dataTuple.getType() == DataTuple.MQ_PAY){
-//			try {
-//				Thread.sleep(500);
-//			} catch (InterruptedException e) {
-//				// TODO Auto-generated catch block
-//				e.printStackTrace();
-//			}
-//		}
 		if(dataTuple.getType() == DataTuple.MQ_PAY){
-			System.out.println("Emit tuple: "+dataTuple.getOrderId()+","+dataTuple.getType());
-//			this.collector.emit(new Values(dataTuple.getOrderId(), dataTuple), dataTuple.getEmitMs());
-			PaymentMessage paymentMessage = dataTuple.getPayMessage();
-			long timestamp = paymentMessage.getCreateTime()/1000/60 *60; //分钟
-			this.collector.emit("ratio_out", new Values(paymentMessage.getPayPlatform(),timestamp, paymentMessage.getPayAmount()));
+			try {
+				Thread.sleep(100);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			this.collector.emit("pay_stream", new Values(dataTuple.getPayMessage().getOrderId(), 
+												dataTuple.getPayMessage().getCreateTime()/1000/60 *60, dataTuple.getPayMessage().getPayAmount()));
+		}else{
+			this.collector.emit("order_stream", new Values(dataTuple.getOrderId(), dataTuple.getType()));
 		}
-//		System.out.println("Emit tuple: "+dataTuple.getOrderId()+","+dataTuple.getType());
-//		this.collector.emit(new Values(dataTuple.getOrderId(), dataTuple), dataTuple.getEmitMs());
 	}
 
 	@Override
@@ -123,8 +119,8 @@ public class MqSpout implements IRichSpout, MessageListenerConcurrently {
 	@Override
 	public void declareOutputFields(OutputFieldsDeclarer declarer) {
 		// TODO Auto-generated method stub
-		declarer.declare(new Fields("orderId","spout_msg"));
-		declarer.declareStream("ratio_out", new Fields("platform", "created_time", "amount"));
+		declarer.declareStream("pay_stream", new Fields("orderId", "createdTime", "amount"));
+		declarer.declareStream("order_stream", new Fields("orderId", "type"));
 	}
 
 	@Override

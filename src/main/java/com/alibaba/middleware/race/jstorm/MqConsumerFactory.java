@@ -17,7 +17,7 @@ public class MqConsumerFactory {
     public static Map<String, DefaultMQPushConsumer> consumers = 
     		new HashMap<String, DefaultMQPushConsumer>();
     
-    public static synchronized DefaultMQPushConsumer mkInstance(MessageListenerOrderly listener)  throws Exception{
+    public static synchronized DefaultMQPushConsumer mkInstance(MessageListenerConcurrently listener)  throws Exception{
     	
     	String key =  "consumer@" + RaceConfig.MqGroup;
     	
@@ -29,7 +29,7 @@ public class MqConsumerFactory {
         
         consumer = new DefaultMQPushConsumer(RaceConfig.MetaConsumerGroup);
         
-        consumer.setNamesrvAddr(RaceConfig.MqNameServer);
+//        consumer.setNamesrvAddr(RaceConfig.MqNameServer);
         String instanceName = RaceConfig.MqGroup +"@" +	JStormUtils.process_pid();
 		consumer.setInstanceName(instanceName);
 //		consumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_FIRST_OFFSET);
