@@ -89,23 +89,18 @@ public class MqSpout implements IRichSpout, MessageListenerConcurrently {
 		if(dataTuple == null){
 			return;
 		}
-//		if(dataTuple.getType() == DataTuple.MQ_PAY){
-//			try {
-//				Thread.sleep(500);
-//			} catch (InterruptedException e) {
-//				// TODO Auto-generated catch block
-//				e.printStackTrace();
-//			}
-//		}
+
 		if(dataTuple.getType() == DataTuple.MQ_PAY){
-			System.out.println("Emit tuple: "+dataTuple.getOrderId()+","+dataTuple.getType());
-//			this.collector.emit(new Values(dataTuple.getOrderId(), dataTuple), dataTuple.getEmitMs());
 			PaymentMessage paymentMessage = dataTuple.getPayMessage();
-			long timestamp = paymentMessage.getCreateTime()/1000/60 *60; //分钟
-			this.collector.emit("ratio_out", new Values(paymentMessage.getPayPlatform(),timestamp, paymentMessage.getPayAmount()));
+//			this.collector.emit("ratio_out", new Values(paymentMessage.getPayPlatform(),timestamp, paymentMessage.getPayAmount()));
+			long timestamp = RaceUtils.getMinuteTime(paymentMessage.getCreateTime());
+			this.collector.emit("order_pay", new Values(DataTuple.MQ_PAY, paymentMessage.getOrderId(),paymentMessage.getPayAmount(),timestamp));
+			System.out.println("Emit tuple: "+dataTuple.getOrderId()+","+dataTuple.getType());
+		}else{
+			OrderMessage orderMessage = dataTuple.getOrderMessage();
+			long timestamp = RaceUtils.getMinuteTime(orderMessage.getCreateTime());
+			this.collector.emit("order_pay", new Values(dataTuple.getType(),orderMessage.getOrderId(), orderMessage.getTotalPrice(), timestamp));
 		}
-//		System.out.println("Emit tuple: "+dataTuple.getOrderId()+","+dataTuple.getType());
-//		this.collector.emit(new Values(dataTuple.getOrderId(), dataTuple), dataTuple.getEmitMs());
 	}
 
 	@Override
@@ -123,8 +118,8 @@ public class MqSpout implements IRichSpout, MessageListenerConcurrently {
 	@Override
 	public void declareOutputFields(OutputFieldsDeclarer declarer) {
 		// TODO Auto-generated method stub
-		declarer.declare(new Fields("orderId","spout_msg"));
-		declarer.declareStream("ratio_out", new Fields("platform", "created_time", "amount"));
+		declarer.declareStream("order_pay", new Fields("type", "orderId","amount","createdTime"));
+		declarer.declareStream("ratio_out", new Fields("platform", "amount", "createdTime"));
 	}
 
 	@Override
@@ -151,19 +146,19 @@ public class MqSpout implements IRichSpout, MessageListenerConcurrently {
             	PaymentMessage paymentMessage = RaceUtils.readKryoObject(PaymentMessage.class, body);
             	dataTuple.setPayMessage(paymentMessage);
             	dataTuple.setOrderId(paymentMessage.getOrderId());
-            	System.out.println("Receive Messge: ["+paymentMessage.getOrderId()+","+dataTuple.getType()+"]");
+            	System.out.println("Receive Pay Messge: ["+paymentMessage.getOrderId()+","+dataTuple.getType()+"]");
             }else if(topic.equals(RaceConfig.MqTmallTradeTopic)){
             	dataTuple.setType(DataTuple.MQ_TMALL_ORDER);
             	OrderMessage orderMessage = RaceUtils.readKryoObject(OrderMessage.class, body);
             	dataTuple.setOrderMessage(orderMessage);
+            	System.out.println("Receive Tmall Order Messge: ["+orderMessage.getOrderId()+","+dataTuple.getType()+"]");
             	dataTuple.setOrderId(orderMessage.getOrderId());
-            	System.out.println("Receive Messge: ["+orderMessage.getOrderId()+","+dataTuple.getType()+"]");
             }else if( topic.equals(RaceConfig.MqTaobaoTradeTopic)){
             	dataTuple.setType(DataTuple.MQ_TAOBAO_ORDER);
             	OrderMessage orderMessage = RaceUtils.readKryoObject(OrderMessage.class, body);
             	dataTuple.setOrderMessage(orderMessage);
             	dataTuple.setOrderId(orderMessage.getOrderId());
-            	System.out.println("Receive Messge: ["+orderMessage.getOrderId()+","+dataTuple.getType()+"]");
+            	System.out.println("Receive Taobao Order Messge: ["+orderMessage.getOrderId()+","+dataTuple.getType()+"]");
             }else{
             	System.out.println("Unknow message!!!!");
             	continue;

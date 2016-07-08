@@ -38,5 +38,9 @@ public class RaceUtils {
     	BigDecimal  bd2 = bd.setScale(decemial,BigDecimal.ROUND_HALF_UP);
     	return Double.parseDouble(bd2.toString());
     }
+    
+    public static long getMinuteTime(long timestamp){
+    	return timestamp/1000/60 * 60;
+    }
 
 }

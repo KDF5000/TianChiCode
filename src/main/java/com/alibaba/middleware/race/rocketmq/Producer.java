@@ -7,12 +7,15 @@ import com.alibaba.rocketmq.client.producer.DefaultMQProducer;
 import com.alibaba.rocketmq.client.producer.SendCallback;
 import com.alibaba.rocketmq.client.producer.SendResult;
 import com.alibaba.rocketmq.common.message.Message;
+
 import com.alibaba.middleware.race.model.*;
 import com.alibaba.middleware.race.RaceUtils;
 
-
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.Semaphore;
+
 
 
 /**
@@ -21,7 +24,24 @@ import java.util.concurrent.Semaphore;
 public class Producer {
 
     private static Random rand = new Random();
-    private static int count = 50;
+    private static int count = 10;
+    private static HashMap<String, Double> orderResult = new HashMap<String, Double>();
+    
+    public static void addResult(OrderMessage orderMessage, PaymentMessage paymentMessage, int platform){
+    	long timestamp = RaceUtils.getMinuteTime(paymentMessage.getCreateTime());
+    	String key = platform == 0 ? RaceConfig.prex_taobao+timestamp : RaceConfig.prex_tmall+timestamp;
+    	double amount = paymentMessage.getPayAmount();
+    	if(Producer.orderResult.containsKey(key)){
+    		amount += Producer.orderResult.get(key);
+    	}
+    	Producer.orderResult.put(key, amount);
+    }
+    
+    public static void printOrderResult(){
+    	for(Map.Entry<String, Double> entry: Producer.orderResult.entrySet()){
+    		System.out.println("["+entry.getKey()+","+RaceUtils.round(entry.getValue(), 2)+"]");
+    	}
+    }
 
     /**
      * 这是一个模拟堆积消息的程序，生成的消息模型和我们比赛的消息模型是一样的，
@@ -66,6 +86,9 @@ public class Producer {
                 PaymentMessage[] paymentMessages = PaymentMessage.createPayMentMsg(orderMessage);
                 double amount = 0;
                 for (final PaymentMessage paymentMessage : paymentMessages) {
+                	////////////
+                	Producer.addResult(orderMessage, paymentMessage, platform);
+                	////////////
                     int retVal = Double.compare(paymentMessage.getPayAmount(), 0);
                     if (retVal < 0) {
                         throw new RuntimeException("price < 0 !!!!!!!!");
@@ -114,5 +137,6 @@ public class Producer {
             e.printStackTrace();
         }
         producer.shutdown();
+        Producer.printOrderResult();
     }
 }

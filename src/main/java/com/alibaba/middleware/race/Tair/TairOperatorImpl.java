@@ -42,6 +42,7 @@ public class TairOperatorImpl {
 
     public boolean write(Serializable key, Serializable value) {
     	ResultCode resultCode = this.tairManager.put(this.namespace, key, value);
+//    	System.err.println(resultCode.getMessage());
     	if(resultCode.isSuccess()){
     		return true;
     	}
@@ -51,8 +52,10 @@ public class TairOperatorImpl {
     public Object get(Serializable key) {
     	Result<DataEntry> result = tairManager.get(this.namespace, key);
 	    DataEntry entry = null;
+	    
 	    if (result.isSuccess()) {
 	      entry = result.getValue();
+//	      System.out.println("res:"+entry);
 	    } else {
 	      // 异常处理
 	      System.out.println(result.getRc().getMessage());
@@ -75,6 +78,10 @@ public class TairOperatorImpl {
     		this.tairManager.close();
     	}
     }
+     
+    public void init(){
+    	this.tairManager.init();
+    }
 
     //天猫的分钟交易额写入tair
     public static void main(String [] args) throws Exception {
@@ -87,8 +94,12 @@ public class TairOperatorImpl {
         //假设这一分钟的交易额是100;
         Double money = 100.0;
         //写入tair
-        tairOperator.write(RaceConfig.prex_tmall + minuteTime, money);
+        tairOperator.write(RaceConfig.prex_tmall +minuteTime, money);
         System.out.println(tairOperator.get(RaceConfig.prex_tmall + minuteTime));
+        
+        tairOperator.write(RaceConfig.prex_tmall+(minuteTime+1), money+100);
+        System.out.println(tairOperator.get(RaceConfig.prex_tmall+(minuteTime+1)));
         tairOperator.close();
+        
     }
 }
