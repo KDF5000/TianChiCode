@@ -7,16 +7,19 @@ import java.security.Timestamp;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.concurrent.LinkedBlockingDeque;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.alibaba.middleware.race.RaceConfig;
 import com.alibaba.middleware.race.RaceUtils;
+import com.alibaba.middleware.race.Tair.TairData;
 import com.alibaba.middleware.race.Tair.TairOperatorImpl;
 import com.alibaba.middleware.race.Tair.TairRunnable;
 import com.esotericsoftware.minlog.Log;
 
+import backtype.storm.generated.MetricWindow;
 import backtype.storm.task.OutputCollector;
 import backtype.storm.task.TopologyContext;
 import backtype.storm.topology.IRichBolt;
@@ -32,11 +35,13 @@ class RatioNode{
 public class PlatformRatioStatBolt implements IRichBolt{
 	private static Logger LOG = LoggerFactory.getLogger(PlatformRatioStatBolt.class);
 	private OutputCollector collector;
-	private TairOperatorImpl tairOperator = null;
 	private HashMap<Long, Integer> pcNodeMap = null;//时间戳和节点的索引
 	private HashMap<Long, Integer> mobileNodeMap = null;//移动端map
 	private LinkedList<RatioNode> pcAmountStat = null;
 	private LinkedList<RatioNode> mobileAmountStat = null;
+	
+	private LinkedBlockingDeque<TairData> tairDataList = null;
+	
 	//DEBUG
 //	private FileOutputStream out = null;
 	//DEBUG
@@ -44,12 +49,16 @@ public class PlatformRatioStatBolt implements IRichBolt{
 	public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
 		// TODO Auto-generated method stub
 		this.collector = collector;
-//		this.tairOperator = new TairOperatorImpl(RaceConfig.TairConfigServer, RaceConfig.TairSalveConfigServer,
-//                RaceConfig.TairGroup, RaceConfig.TairNamespace);
 		this.pcNodeMap = new HashMap<Long, Integer>();
 		this.pcAmountStat = new LinkedList<RatioNode>();
 		this.mobileNodeMap = new HashMap<Long, Integer>();
 		this.mobileAmountStat = new LinkedList<RatioNode>();
+		
+		this.tairDataList = new LinkedBlockingDeque<TairData>();
+		//启动一个线程专门去写tair
+		Runnable tairRunnable = new TairRunnable(this.tairDataList);
+		Thread thread = new Thread(tairRunnable);
+		thread.start();		
 		
 		///////DEBUG/////////
 		/*try {
@@ -74,7 +83,7 @@ public class PlatformRatioStatBolt implements IRichBolt{
 		}
 		this.restatRatio(timestamp);
 		
-//		this.collector.ack(input);
+		this.collector.ack(input);
 	}
 	/**
 	 * 重新计算ratio
@@ -109,10 +118,8 @@ public class PlatformRatioStatBolt implements IRichBolt{
 					//计算ratio,写入tair
 //					System.out.println("["+pcNode.timestamp+","+RaceUtils.round(mobileNode.totalAmount/pcNode.totalAmount, 2)+"]");
 //					this.tairOperator.write(RaceConfig.prex_ratio+RaceConfig.TeamCode+"_"+pcNode.timestamp, RaceUtils.round(mobileNode.totalAmount/pcNode.totalAmount, 2));
+					this.tairDataList.offer(new TairData(RaceConfig.prex_ratio+RaceConfig.TeamCode+"_"+pcNode.timestamp, RaceUtils.round(mobileNode.totalAmount/pcNode.totalAmount, 2)));
 					Log.info("["+RaceConfig.prex_ratio+RaceConfig.TeamCode+"_"+pcNode.timestamp+","+RaceUtils.round(mobileNode.totalAmount/pcNode.totalAmount, 2)+"]");
-					Runnable tairRunnable = new TairRunnable(RaceConfig.prex_ratio+RaceConfig.TeamCode+"_"+pcNode.timestamp,RaceUtils.round(mobileNode.totalAmount/pcNode.totalAmount, 2));
-					Thread thread = new Thread(tairRunnable);
-					thread.start();
 					
 					//////////debug////////
 					/*try {

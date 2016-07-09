@@ -42,7 +42,7 @@ public class PayMinuteStatBolt implements IRichBolt {
 		this.minuteTotalMap.put(key, totalAmount);//放入map
 		this.collector.emit(new Values(platform, timestamp,totalAmount));
 		
-//		this.collector.ack(input);
+		this.collector.ack(input);
 	}
 
 	@Override

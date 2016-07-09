@@ -62,7 +62,6 @@ public class Consumer {
                     	OrderMessage orderMessage = RaceUtils.readKryoObject(OrderMessage.class, body);
                     	System.out.println(orderMessage);
                     }
-                    
                 }
                 return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
 			}

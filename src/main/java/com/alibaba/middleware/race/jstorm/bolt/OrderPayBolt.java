@@ -99,7 +99,7 @@ public class OrderPayBolt implements IRichBolt {
 				this.unemitPayMsg.add(payMsg);
 			}
 		}
-//		this.collector.ack(input);
+		this.collector.ack(input);
 	}
 
 	@Override
