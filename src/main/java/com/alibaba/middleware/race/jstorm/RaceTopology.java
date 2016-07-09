@@ -48,7 +48,7 @@ public class RaceTopology {
         
         String topologyName = RaceConfig.JstormTopologyName;
 
-        config.setNumAckers(0);
+//        config.setNumAckers(0);
       //通过是否有参数来控制是否启动集群，或者本地模式执行
 //        if(args != null && args.length > 0) {
             try {
