@@ -12,9 +12,12 @@ import com.alibaba.middleware.race.model.*;
 import com.alibaba.middleware.race.RaceUtils;
 
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.Semaphore;
+
+import javax.xml.ws.LogicalMessage;
 
 
 
@@ -24,17 +27,112 @@ import java.util.concurrent.Semaphore;
 public class Producer {
 
     private static Random rand = new Random();
-    private static int count = 500;
+    private static int count = 2000;
     private static HashMap<String, Double> orderResult = new HashMap<String, Double>();
     private static HashMap<Long, Double> pcTotal = new HashMap<Long, Double>();
     private static HashMap<Long, Double> mobileTotal = new HashMap<Long, Double>();
     
+    /**
+	 * 从尾遍历插入
+	 * @param list
+	 * @param newData
+	 * @return
+	 */
+	public static int insertListTail(LinkedList<Long> list, long newData){
+		int size = list.size();
+		int i = size -1;
+		for(;i>=0;i--){
+			long node = list.get(i);
+			if(newData > node){
+				if(i == size-1){
+					list.addLast(newData);
+				}else{
+					list.add(i+1, newData);
+				}
+				break;
+			}
+		}
+		if(i==-1){
+			list.addFirst(newData);
+		}
+		return i+1;
+	}
+	static class Node{
+		long timestamp;
+		double total;
+	}
     public static void printRatio(){
+    	LinkedList<Long> pcList = new LinkedList<Long>();
     	for(Map.Entry<Long, Double> entry: Producer.pcTotal.entrySet()){
-    		if(entry.getValue() != 0){
-    			long timestamp = entry.getKey();
-    			if(Producer.mobileTotal.containsKey(timestamp)){
-    				System.out.println("["+timestamp+","+RaceUtils.round(Producer.mobileTotal.get(timestamp)/entry.getValue(), 2)+"]");
+    		Producer.insertListTail(pcList, entry.getKey());
+    	}
+    	
+    	LinkedList<Long> mobileList = new LinkedList<Long>();
+    	for(Map.Entry<Long, Double> entry: Producer.mobileTotal.entrySet()){
+    		Producer.insertListTail(mobileList, entry.getKey());
+    	}
+    	/***顺序打印每分钟的总量**/
+    	System.out.println("---------PC----------");
+    	for(int i=0;i<pcList.size();i++){
+    		long timestamp = pcList.get(i);
+    		System.out.print(timestamp+":"+Producer.pcTotal.get(timestamp)+",");
+    	}
+    	System.out.println("\n---------PC----------");
+    	System.out.println("---------MOBILE----------");
+    	for(int i=0;i<mobileList.size();i++){
+    		long timestamp = mobileList.get(i);
+    		System.out.print(timestamp+":"+Producer.mobileTotal.get(timestamp)+",");
+    	}
+    	System.out.println("\n---------MOBILE----------");
+    	/***顺序打印每分钟的总量**/
+    	
+    	LinkedList<Producer.Node> pcTotalList = new LinkedList<Producer.Node>();
+    	double lastTotal = 0;
+    	for(int i=0;i<pcList.size();i++){
+    		Producer.Node node = new Producer.Node();
+    		long timestamp = pcList.get(i);
+    		node.timestamp = timestamp;
+    		node.total = lastTotal + Producer.pcTotal.get(timestamp);
+    		pcTotalList.add(node);
+    		lastTotal = node.total;
+    	}
+    	LinkedList<Producer.Node> mobileTotalList = new LinkedList<Producer.Node>();
+    	lastTotal = 0;
+    	for(int i=0;i<mobileList.size();i++){
+    		Producer.Node node = new Producer.Node();
+    		long timestamp = mobileList.get(i);
+    		node.timestamp = timestamp;
+    		node.total = lastTotal + Producer.mobileTotal.get(timestamp);
+    		mobileTotalList.add(node);
+    		lastTotal = node.total;
+    	}
+    	/***打印叠加总量****/
+    	System.out.println("---------PC TOTAL----------");
+    	for(int i=0;i<pcTotalList.size();i++){
+    		Producer.Node node = pcTotalList.get(i);
+    		System.out.print(node.timestamp+":"+node.total+",");
+    	}
+    	System.out.println("\n---------PC TOTAL----------");
+    	System.out.println("---------MOBILE TOTAL----------");
+    	for(int i=0;i<mobileTotalList.size();i++){
+    		Producer.Node node = mobileTotalList.get(i);
+    		System.out.print(node.timestamp+":"+node.total+",");
+    	}
+    	System.out.println("\n---------MOBILE TOTAL----------");
+    	/***打印叠加总量****/
+    	
+    	int i=0,j =0;
+    	while(i<pcTotalList.size() && j < mobileTotalList.size()){
+    		Producer.Node pcNode = pcTotalList.get(i);
+    		Producer.Node mobileNode = mobileTotalList.get(j);
+    		if(pcNode.timestamp == mobileNode.timestamp && pcNode.total!=0){
+    			System.out.println("["+pcNode.timestamp+","+RaceUtils.round(mobileNode.total/pcNode.total, 2)+"]");
+    			i++;j++;
+    		}else{
+    			if(pcNode.timestamp < mobileNode.timestamp){
+    				i++;
+    			}else{
+    				j++;
     			}
     		}
     	}

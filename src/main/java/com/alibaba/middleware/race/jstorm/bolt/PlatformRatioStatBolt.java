@@ -99,7 +99,7 @@ public class PlatformRatioStatBolt implements IRichBolt{
 				RatioNode mobileNode = this.mobileAmountStat.get(index);
 				if(pcNode.totalAmount != 0){
 					//计算ratio,写入tair
-					System.out.println("["+pcNode.timestamp+","+RaceUtils.round(mobileNode.totalAmount/pcNode.totalAmount, 2)+"]");
+//					System.out.println("["+pcNode.timestamp+","+RaceUtils.round(mobileNode.totalAmount/pcNode.totalAmount, 2)+"]");
 					this.tairOperator.write(RaceConfig.prex_ratio+RaceConfig.TeamCode+"_"+pcNode.timestamp, RaceUtils.round(mobileNode.totalAmount/pcNode.totalAmount, 2));
 					
 					//////////debug////////
