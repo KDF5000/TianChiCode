@@ -72,5 +72,6 @@ public class RaceTopology {
 //          LocalCluster cluster = new LocalCluster();
 //          cluster.submitTopology(topologyName, config, builder.createTopology());
 //        }
+
     }
 }
