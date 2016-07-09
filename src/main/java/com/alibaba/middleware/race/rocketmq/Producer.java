@@ -27,7 +27,7 @@ import javax.xml.ws.LogicalMessage;
 public class Producer {
 
     private static Random rand = new Random();
-    private static int count = 2000;
+    private static int count = 20000;
     private static HashMap<String, Double> orderResult = new HashMap<String, Double>();
     private static HashMap<Long, Double> pcTotal = new HashMap<Long, Double>();
     private static HashMap<Long, Double> mobileTotal = new HashMap<Long, Double>();
@@ -126,7 +126,7 @@ public class Producer {
     		Producer.Node pcNode = pcTotalList.get(i);
     		Producer.Node mobileNode = mobileTotalList.get(j);
     		if(pcNode.timestamp == mobileNode.timestamp && pcNode.total!=0){
-    			System.out.println("["+pcNode.timestamp+","+RaceUtils.round(mobileNode.total/pcNode.total, 2)+"]");
+    			System.out.println("["+RaceConfig.prex_ratio+RaceConfig.TeamCode+"_"+pcNode.timestamp+","+RaceUtils.round(mobileNode.total/pcNode.total, 2)+"]");
     			i++;j++;
     		}else{
     			if(pcNode.timestamp < mobileNode.timestamp){
@@ -156,7 +156,7 @@ public class Producer {
     }
     public static void addResult(OrderMessage orderMessage, PaymentMessage paymentMessage, int platform){
     	long timestamp = RaceUtils.getMinuteTime(paymentMessage.getCreateTime());
-    	String key = platform == 0 ? RaceConfig.prex_taobao+timestamp : RaceConfig.prex_tmall+timestamp;
+    	String key = platform == 0 ? RaceConfig.prex_taobao+RaceConfig.TeamCode+"_"+timestamp : RaceConfig.prex_tmall+RaceConfig.TeamCode+"_"+timestamp;
     	double amount = paymentMessage.getPayAmount();
     	if(Producer.orderResult.containsKey(key)){
     		amount += Producer.orderResult.get(key);
@@ -190,7 +190,7 @@ public class Producer {
 
         for (int i = 0; i < count; i++) {
             try {
-            	Thread.sleep(100);
+            	Thread.sleep(10);
                 final int platform = rand.nextInt(2);
                 final OrderMessage orderMessage = ( platform == 0 ? OrderMessage.createTbaoMessage() : OrderMessage.createTmallMessage());
                 orderMessage.setCreateTime(System.currentTimeMillis());

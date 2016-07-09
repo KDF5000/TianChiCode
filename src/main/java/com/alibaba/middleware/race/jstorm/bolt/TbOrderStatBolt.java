@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import com.alibaba.middleware.race.RaceConfig;
 import com.alibaba.middleware.race.RaceUtils;
 import com.alibaba.middleware.race.Tair.TairOperatorImpl;
+import com.alibaba.middleware.race.Tair.TairRunnable;
 import com.esotericsoftware.minlog.Log;
 import backtype.storm.task.OutputCollector;
 import backtype.storm.task.TopologyContext;
@@ -30,8 +31,8 @@ public class TbOrderStatBolt implements IRichBolt {
 		// TODO Auto-generated method stub
 		this.collector = collector;
 		this.orderResult = new HashMap<Long, Double>();
-		this.tairOperator = new TairOperatorImpl(RaceConfig.TairConfigServer, RaceConfig.TairSalveConfigServer,
-                RaceConfig.TairGroup, RaceConfig.TairNamespace);
+//		this.tairOperator = new TairOperatorImpl(RaceConfig.TairConfigServer, RaceConfig.TairSalveConfigServer,
+//                RaceConfig.TairGroup, RaceConfig.TairNamespace);
 		/*try {
 			out = new FileOutputStream("tb.out");
 		} catch (FileNotFoundException e) {
@@ -46,13 +47,18 @@ public class TbOrderStatBolt implements IRichBolt {
 		// TODO Auto-generated method stub
 		long timestamp = input.getLongByField("timestamp");
 		Double amount = input.getDoubleByField("amount");
-		double newAmount = amount;
+	    double newAmount = amount;
 		if(this.orderResult.containsKey(timestamp)){
 			newAmount += this.orderResult.get(timestamp);
 		}
 		this.orderResult.put(timestamp, newAmount);
-		boolean res = this.tairOperator.write(RaceConfig.prex_taobao+RaceConfig.TeamCode+"_"+timestamp, RaceUtils.round(newAmount, 2));
-		Log.info(">>>>>>"+res+"["+RaceConfig.prex_taobao+RaceConfig.TeamCode+"_"+timestamp+","+newAmount+"]");
+		
+		Runnable tairRunnable = new TairRunnable(RaceConfig.prex_taobao+RaceConfig.TeamCode+"_"+timestamp, RaceUtils.round(newAmount, 2));
+		Thread thread = new Thread(tairRunnable);
+		thread.start();
+
+//		boolean res = this.tairOperator.write(RaceConfig.prex_taobao+RaceConfig.TeamCode+"_"+timestamp, RaceUtils.round(newAmount, 2));
+		Log.info(">>>>>>["+RaceConfig.prex_taobao+RaceConfig.TeamCode+"_"+timestamp+","+newAmount+"]");
 		
 		/*try {
 			out.write(("["+RaceConfig.prex_taobao+RaceConfig.TeamCode+"_"+timestamp+","+newAmount+"]\n").getBytes());
@@ -61,7 +67,7 @@ public class TbOrderStatBolt implements IRichBolt {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}*/
-		this.collector.ack(input);
+//		this.collector.ack(input);
 	}
 
 	@Override

@@ -5,6 +5,9 @@ import com.taobao.tair.DataEntry;
 import com.taobao.tair.Result;
 import com.taobao.tair.ResultCode;
 import com.taobao.tair.impl.DefaultTairManager;
+
+import backtype.storm.tuple.Values;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -18,7 +21,7 @@ public class TairOperatorImpl {
 	
 	protected DefaultTairManager tairManager = null;
 	protected List<String> confServer = null;
-	protected int namespace = 0; //默认是0
+	protected int namespace;                 // namespace
 //	protected int DEFAULT_EXPIRE_TIME = 1800; //秒，比赛的最长运行时间要求是20分钟，这里设置缓存30分钟
 	
     public TairOperatorImpl(String masterConfigServer,
@@ -29,7 +32,7 @@ public class TairOperatorImpl {
 		//创建config server
 		this.confServer = new ArrayList<String>();
 		this.confServer.add(masterConfigServer);
-		
+		this.confServer.add(slaveConfigServer);
 		//创建客户端
 		this.tairManager = new DefaultTairManager();
 		this.tairManager.setConfigServerList(this.confServer);
@@ -41,8 +44,7 @@ public class TairOperatorImpl {
     }
 
     public boolean write(Serializable key, Serializable value) {
-    	ResultCode resultCode = this.tairManager.put(this.namespace, key, value);
-//    	System.err.println(resultCode.getMessage());
+    	ResultCode resultCode = this.tairManager.put(namespace, key, value, 0, 0);
     	if(resultCode.isSuccess()){
     		return true;
     	}

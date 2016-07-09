@@ -68,7 +68,7 @@ public class OrderPayBolt implements IRichBolt {
 						orderType.remainPrice -= payMsg.amount;
 						this.unemitPayMsg.remove(i);
 						i--;//移除了一个元素所以要回退
-						System.err.println("<<<<<Emit:"+"[order_stat_"+orderType.type+","+payMsg.timestamp+","+ payMsg.amount+"]");
+//						System.err.println("<<<<<Emit:"+"[order_stat_"+orderType.type+","+payMsg.timestamp+","+ payMsg.amount+"]");
 						this.collector.emit("order_stat_"+orderType.type, new Values(payMsg.timestamp, payMsg.amount));
 					}
 				}
@@ -88,7 +88,7 @@ public class OrderPayBolt implements IRichBolt {
 				}else{//重新放入map
 					this.orderTypeMap.put(orderId, orderType);
 				}
-				System.err.println("<<<<<Emit:"+"[order_stat_"+orderType.type+","+timestamp+","+ amount+"]");
+//				System.err.println("<<<<<Emit:"+"[order_stat_"+orderType.type+","+timestamp+","+ amount+"]");
 				this.collector.emit("order_stat_"+orderType.type, new Values(timestamp, amount));
 			}else{
 				//暂时放到待消费队列里
@@ -99,7 +99,7 @@ public class OrderPayBolt implements IRichBolt {
 				this.unemitPayMsg.add(payMsg);
 			}
 		}
-		this.collector.ack(input);
+//		this.collector.ack(input);
 	}
 
 	@Override

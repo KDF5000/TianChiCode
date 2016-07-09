@@ -40,7 +40,7 @@ public class RaceUtils {
     }
     
     public static long getMinuteTime(long timestamp){
-    	return timestamp/1000/60 * 60;
+    	return (timestamp / 1000 / 60) * 60;
     }
 
 }

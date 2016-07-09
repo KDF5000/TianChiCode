@@ -7,22 +7,12 @@ import backtype.storm.topology.TopologyBuilder;
 import backtype.storm.tuple.Fields;
 import com.alibaba.middleware.race.RaceConfig;
 import com.alibaba.middleware.race.RaceUtils;
-import com.alibaba.middleware.race.jstorm.bolt.FilterMessageBolt;
 import com.alibaba.middleware.race.jstorm.bolt.OrderPayBolt;
-import com.alibaba.middleware.race.jstorm.bolt.OrderReflectBolt;
 import com.alibaba.middleware.race.jstorm.bolt.PayMinuteStatBolt;
-import com.alibaba.middleware.race.jstorm.bolt.PayStatBolt;
 import com.alibaba.middleware.race.jstorm.bolt.PlatformRatioStatBolt;
-import com.alibaba.middleware.race.jstorm.bolt.RatioBolt;
-import com.alibaba.middleware.race.jstorm.bolt.RatioStatBolt;
-import com.alibaba.middleware.race.jstorm.bolt.StatPayBolt;
 import com.alibaba.middleware.race.jstorm.bolt.TbOrderStatBolt;
 import com.alibaba.middleware.race.jstorm.bolt.TmOrderStatBolt;
 import com.alibaba.middleware.race.model.DataTuple;
-
-import javax.xml.crypto.Data;
-
-//import org.apache.velocity.runtime.directive.Macro;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,19 +39,20 @@ public class RaceTopology {
 
         builder.setSpout("spout", new MqSpout(), 2);
         
-        builder.setBolt("pay_minute", new PayMinuteStatBolt(),2).fieldsGrouping("spout", "ratio_out", new Fields("createdTime"));
+        builder.setBolt("pay_minute", new PayMinuteStatBolt(),1).fieldsGrouping("spout", "ratio_out", new Fields("createdTime"));
         builder.setBolt("ratio_stat", new PlatformRatioStatBolt(), 1).shuffleGrouping("pay_minute");
         
-        builder.setBolt("order_pay", new OrderPayBolt(), 1).fieldsGrouping("spout","order_pay", new Fields("orderId"));
-        builder.setBolt("tm_stat", new TmOrderStatBolt(), 2).fieldsGrouping("order_pay", "order_stat_"+DataTuple.MQ_TMALL_ORDER, new Fields("timestamp"));
-        builder.setBolt("tb_stat", new TbOrderStatBolt(), 2).fieldsGrouping("order_pay", "order_stat_"+DataTuple.MQ_TAOBAO_ORDER, new Fields("timestamp"));
+        builder.setBolt("order_pay", new OrderPayBolt(), 2).fieldsGrouping("spout","order_pay", new Fields("orderId"));
+        builder.setBolt("tm_stat", new TmOrderStatBolt(), 3).fieldsGrouping("order_pay", "order_stat_"+DataTuple.MQ_TMALL_ORDER, new Fields("timestamp"));
+        builder.setBolt("tb_stat", new TbOrderStatBolt(), 3).fieldsGrouping("order_pay", "order_stat_"+DataTuple.MQ_TAOBAO_ORDER, new Fields("timestamp"));
         
         String topologyName = RaceConfig.JstormTopologyName;
 
+        config.setNumAckers(0);
       //通过是否有参数来控制是否启动集群，或者本地模式执行
-//        if (args != null && args.length > 0) {
+//        if(args != null && args.length > 0) {
             try {
-                config.setNumWorkers(4);
+                config.setNumWorkers(3);
                 StormSubmitter.submitTopology(topologyName, config,
                         builder.createTopology());
             } catch (Exception e) {

@@ -22,7 +22,7 @@ public class RaceConfig implements Serializable {
 //    public static String TairConfigServer = "172.16.2.128:5198";
 //    public static String TairSalveConfigServer = "172.16.2.128:5198";
 //    public static String TairGroup = "group_1";
-//    public static Integer TairNamespace = 1;
+//    public static Integer TairNamespace = 0;
    
     public static String TairConfigServer = "10.101.72.127:5198";
     public static String TairSalveConfigServer = "10.101.72.128:5198";
