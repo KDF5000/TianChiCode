@@ -24,9 +24,38 @@ import java.util.concurrent.Semaphore;
 public class Producer {
 
     private static Random rand = new Random();
-    private static int count = 10;
+    private static int count = 500;
     private static HashMap<String, Double> orderResult = new HashMap<String, Double>();
+    private static HashMap<Long, Double> pcTotal = new HashMap<Long, Double>();
+    private static HashMap<Long, Double> mobileTotal = new HashMap<Long, Double>();
     
+    public static void printRatio(){
+    	for(Map.Entry<Long, Double> entry: Producer.pcTotal.entrySet()){
+    		if(entry.getValue() != 0){
+    			long timestamp = entry.getKey();
+    			if(Producer.mobileTotal.containsKey(timestamp)){
+    				System.out.println("["+timestamp+","+RaceUtils.round(Producer.mobileTotal.get(timestamp)/entry.getValue(), 2)+"]");
+    			}
+    		}
+    	}
+    }
+    
+    public static void addTotal(PaymentMessage paymentMessage){
+    	long timestamp = RaceUtils.getMinuteTime(paymentMessage.getCreateTime());
+    	if(paymentMessage.getPayPlatform() == 0){
+    		double newAmount = paymentMessage.getPayAmount();
+    		if(Producer.pcTotal.containsKey(timestamp)){
+    			newAmount += Producer.pcTotal.get(timestamp);
+    		}
+    		Producer.pcTotal.put(timestamp, newAmount);
+    	}else{
+    		double newAmount = paymentMessage.getPayAmount();
+    		if(Producer.mobileTotal.containsKey(timestamp)){
+    			newAmount += Producer.mobileTotal.get(timestamp);
+    		}
+    		Producer.mobileTotal.put(timestamp, newAmount);
+    	}
+    }
     public static void addResult(OrderMessage orderMessage, PaymentMessage paymentMessage, int platform){
     	long timestamp = RaceUtils.getMinuteTime(paymentMessage.getCreateTime());
     	String key = platform == 0 ? RaceConfig.prex_taobao+timestamp : RaceConfig.prex_tmall+timestamp;
@@ -63,7 +92,7 @@ public class Producer {
 
         for (int i = 0; i < count; i++) {
             try {
-            	Thread.sleep(60);
+            	Thread.sleep(100);
                 final int platform = rand.nextInt(2);
                 final OrderMessage orderMessage = ( platform == 0 ? OrderMessage.createTbaoMessage() : OrderMessage.createTmallMessage());
                 orderMessage.setCreateTime(System.currentTimeMillis());
@@ -88,6 +117,7 @@ public class Producer {
                 for (final PaymentMessage paymentMessage : paymentMessages) {
                 	////////////
                 	Producer.addResult(orderMessage, paymentMessage, platform);
+                	Producer.addTotal(paymentMessage);
                 	////////////
                     int retVal = Double.compare(paymentMessage.getPayAmount(), 0);
                     if (retVal < 0) {
@@ -138,5 +168,6 @@ public class Producer {
         }
         producer.shutdown();
         Producer.printOrderResult();
+        Producer.printRatio();
     }
 }

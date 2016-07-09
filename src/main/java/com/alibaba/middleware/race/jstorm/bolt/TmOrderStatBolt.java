@@ -46,12 +46,12 @@ public class TmOrderStatBolt implements IRichBolt {
 		this.tairOperator = new TairOperatorImpl(RaceConfig.TairConfigServer, RaceConfig.TairSalveConfigServer,
                 RaceConfig.TairGroup, RaceConfig.TairNamespace);
 		
-//		try {
-//			out = new FileOutputStream("tm.out");
-//		} catch (FileNotFoundException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
+		/*try {
+			out = new FileOutputStream("tm.out");
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}*/
 	}
 
 	@Override
@@ -68,13 +68,13 @@ public class TmOrderStatBolt implements IRichBolt {
 		
 		Log.info(">>>>>>"+res+"["+RaceConfig.prex_tmall+RaceConfig.TeamCode+"_"+timestamp+","+newAmount+"]");
 		
-//		try {
-//			out.write(("["+RaceConfig.prex_tmall+RaceConfig.TeamCode+"_"+timestamp+","+newAmount+"]\n").getBytes());
-//			out.flush();
-//		} catch (IOException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
+		/*try {
+			out.write(("["+RaceConfig.prex_tmall+RaceConfig.TeamCode+"_"+timestamp+","+newAmount+"]\n").getBytes());
+			out.flush();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}*/
 		this.collector.ack(input);
 	}
 

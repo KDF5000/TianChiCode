@@ -32,12 +32,12 @@ public class TbOrderStatBolt implements IRichBolt {
 		this.orderResult = new HashMap<Long, Double>();
 		this.tairOperator = new TairOperatorImpl(RaceConfig.TairConfigServer, RaceConfig.TairSalveConfigServer,
                 RaceConfig.TairGroup, RaceConfig.TairNamespace);
-//		try {
-//			out = new FileOutputStream("tb.out");
-//		} catch (FileNotFoundException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
+		/*try {
+			out = new FileOutputStream("tb.out");
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}*/
 		
 	}
 
@@ -54,13 +54,13 @@ public class TbOrderStatBolt implements IRichBolt {
 		boolean res = this.tairOperator.write(RaceConfig.prex_taobao+RaceConfig.TeamCode+"_"+timestamp, RaceUtils.round(newAmount, 2));
 		Log.info(">>>>>>"+res+"["+RaceConfig.prex_taobao+RaceConfig.TeamCode+"_"+timestamp+","+newAmount+"]");
 		
-//		try {
-//			out.write(("["+RaceConfig.prex_taobao+RaceConfig.TeamCode+"_"+timestamp+","+newAmount+"]\n").getBytes());
-//			out.flush();
-//		} catch (IOException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
+		/*try {
+			out.write(("["+RaceConfig.prex_taobao+RaceConfig.TeamCode+"_"+timestamp+","+newAmount+"]\n").getBytes());
+			out.flush();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}*/
 		this.collector.ack(input);
 	}
 
