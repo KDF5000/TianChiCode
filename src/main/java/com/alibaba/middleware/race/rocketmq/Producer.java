@@ -23,7 +23,7 @@ import java.util.concurrent.Semaphore;
 public class Producer {
 
     private static Random rand = new Random();
-    private static int count = 30000;
+    private static int count = 10000;
     private static HashMap<String, Double> orderResult = new HashMap<String, Double>();
     private static HashMap<Long, Double> pcTotal = new HashMap<Long, Double>();
     private static HashMap<Long, Double> mobileTotal = new HashMap<Long, Double>();
@@ -268,6 +268,6 @@ public class Producer {
         producer.shutdown();
         System.out.println("开始计算数据...");
         Producer.printOrderResult();
-//        Producer.printRatio();
+        Producer.printRatio();
     }
 }

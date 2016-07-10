@@ -39,7 +39,7 @@ public class RaceTopology {
 
         builder.setSpout("spout", new MqSpout(), 2);
         
-        builder.setBolt("pay_minute", new PayMinuteStatBolt(),2).fieldsGrouping("spout", "ratio_out", new Fields("createdTime"));
+        builder.setBolt("pay_minute", new PayMinuteStatBolt(),1).fieldsGrouping("spout", "ratio_out", new Fields("createdTime"));
         builder.setBolt("ratio_stat", new PlatformRatioStatBolt(), 1).shuffleGrouping("pay_minute");
         
         builder.setBolt("order_pay", new OrderPayBolt(), 2).fieldsGrouping("spout","order_pay", new Fields("orderId"));
