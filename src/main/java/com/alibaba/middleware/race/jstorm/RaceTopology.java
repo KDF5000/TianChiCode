@@ -37,12 +37,12 @@ public class RaceTopology {
         Config config = new Config();
         TopologyBuilder builder = new TopologyBuilder();
 
-        builder.setSpout("spout", new MqSpout(), 3);
+        builder.setSpout("spout", new MqSpout(), 2);
         
-        builder.setBolt("pay_minute", new PayMinuteStatBolt(),3).fieldsGrouping("spout", "ratio_out", new Fields("createdTime"));
+        builder.setBolt("pay_minute", new PayMinuteStatBolt(),2).fieldsGrouping("spout", "ratio_out", new Fields("createdTime"));
         builder.setBolt("ratio_stat", new PlatformRatioStatBolt(), 1).shuffleGrouping("pay_minute");
         
-        builder.setBolt("order_pay", new OrderPayBolt(), 4).fieldsGrouping("spout","order_pay", new Fields("orderId"));
+        builder.setBolt("order_pay", new OrderPayBolt(), 2).fieldsGrouping("spout","order_pay", new Fields("orderId"));
         builder.setBolt("tm_stat", new TmOrderStatBolt(), 2).fieldsGrouping("order_pay", "order_stat_"+DataTuple.MQ_TMALL_ORDER, new Fields("timestamp"));
         builder.setBolt("tb_stat", new TbOrderStatBolt(), 2).fieldsGrouping("order_pay", "order_stat_"+DataTuple.MQ_TAOBAO_ORDER, new Fields("timestamp"));
         
@@ -52,7 +52,7 @@ public class RaceTopology {
       //通过是否有参数来控制是否启动集群，或者本地模式执行
 //        if(args != null && args.length > 0) {
             try {
-                config.setNumWorkers(4);
+                config.setNumWorkers(3);
                 StormSubmitter.submitTopology(topologyName, config,
                         builder.createTopology());
             } catch (Exception e) {

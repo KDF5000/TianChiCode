@@ -5,8 +5,11 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.security.Timestamp;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingDeque;
 
 import org.slf4j.Logger;
@@ -40,7 +43,11 @@ public class PlatformRatioStatBolt implements IRichBolt{
 	private LinkedList<RatioNode> pcAmountStat = null;
 	private LinkedList<RatioNode> mobileAmountStat = null;
 	
-	private LinkedBlockingDeque<TairData> tairDataList = null;
+//	private LinkedBlockingDeque<TairData> tairDataList = null;
+	private ConcurrentHashMap<Long, Double> dataCache = null;//暂时缓存要写入的数据
+	
+	private int count = 0;
+	private TairOperatorImpl tairOperator = null;
 	
 	//DEBUG
 //	private FileOutputStream out = null;
@@ -54,20 +61,41 @@ public class PlatformRatioStatBolt implements IRichBolt{
 		this.mobileNodeMap = new HashMap<Long, Integer>();
 		this.mobileAmountStat = new LinkedList<RatioNode>();
 		
-		this.tairDataList = new LinkedBlockingDeque<TairData>();
+		/*this.tairDataList = new LinkedBlockingDeque<TairData>();
 		//启动一个线程专门去写tair
 		Runnable tairRunnable = new TairRunnable(this.tairDataList);
 		Thread thread = new Thread(tairRunnable);
-		thread.start();		
+		thread.start();	*/	
 		
-		///////DEBUG/////////
-		/*try {
-			out = new FileOutputStream("ratio.out");
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}*/
-		///////DEBUG/////////
+		this.dataCache = new ConcurrentHashMap<Long, Double>();
+		this.count = 0;
+		this.tairOperator = new TairOperatorImpl(RaceConfig.TairConfigServer, RaceConfig.TairSalveConfigServer,
+                RaceConfig.TairGroup, RaceConfig.TairNamespace);
+		
+		new Thread(new Runnable() {
+			
+			@Override
+			public void run() {
+				// TODO Auto-generated method stub
+				System.err.println("启动线程!");
+				while(true){
+					try {
+						Thread.sleep(10*1000);// 10s写一次
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					for (Entry<Long, Double> entry : dataCache.entrySet()) {
+			            long key = entry.getKey();
+			            double val = entry.getValue();
+			            System.err.println("Write: "+RaceConfig.prex_ratio+RaceConfig.TeamCode+"_"+key+","+ val);
+			            tairOperator.write(RaceConfig.prex_ratio+RaceConfig.TeamCode+"_"+key, val);
+			            //删除
+			            dataCache.remove(key);
+			        }
+				}
+			}
+		}).start();
 	}
 	
 	@Override
@@ -85,6 +113,18 @@ public class PlatformRatioStatBolt implements IRichBolt{
 		
 		this.collector.ack(input);
 	}
+	
+	private void write2Tair(){
+		Iterator<Entry<Long, Double>> entries = this.dataCache.entrySet().iterator();
+		while(entries.hasNext()){
+			Map.Entry entry = (Map.Entry) entries.next();  
+			Long timestamp = (Long) entry.getKey();
+			Double amount = (Double)entry.getValue();
+			this.tairOperator.write(RaceConfig.prex_ratio+RaceConfig.TeamCode+"_"+timestamp.longValue(), RaceUtils.round(amount.doubleValue(), 2));
+			entries.remove();
+		}
+	}
+	
 	/**
 	 * 重新计算ratio
 	 * @param modifiedTimestamp
@@ -118,18 +158,14 @@ public class PlatformRatioStatBolt implements IRichBolt{
 					//计算ratio,写入tair
 //					System.out.println("["+pcNode.timestamp+","+RaceUtils.round(mobileNode.totalAmount/pcNode.totalAmount, 2)+"]");
 //					this.tairOperator.write(RaceConfig.prex_ratio+RaceConfig.TeamCode+"_"+pcNode.timestamp, RaceUtils.round(mobileNode.totalAmount/pcNode.totalAmount, 2));
-					this.tairDataList.offer(new TairData(RaceConfig.prex_ratio+RaceConfig.TeamCode+"_"+pcNode.timestamp, RaceUtils.round(mobileNode.totalAmount/pcNode.totalAmount, 2)));
-					Log.info("["+RaceConfig.prex_ratio+RaceConfig.TeamCode+"_"+pcNode.timestamp+","+RaceUtils.round(mobileNode.totalAmount/pcNode.totalAmount, 2)+"]");
-					
-					//////////debug////////
-					/*try {
-						out.write(("["+pcNode.timestamp+","+RaceUtils.round(mobileNode.totalAmount/pcNode.totalAmount, 2)+"]\n").getBytes());
-						out.flush();
-					} catch (IOException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
+//					this.tairDataList.offer(new TairData(RaceConfig.prex_ratio+RaceConfig.TeamCode+"_"+pcNode.timestamp, RaceUtils.round(mobileNode.totalAmount/pcNode.totalAmount, 2)));
+					this.dataCache.put(pcNode.timestamp, RaceUtils.round(mobileNode.totalAmount/pcNode.totalAmount, 2));
+					/*this.count++;
+					if(this.count >= 2000){
+						write2Tair();
+						this.count = 0;
 					}*/
-					///////////debug////////
+					Log.info("["+RaceConfig.prex_ratio+RaceConfig.TeamCode+"_"+pcNode.timestamp+","+RaceUtils.round(mobileNode.totalAmount/pcNode.totalAmount, 2)+"]");
 				}
 			}
 		}
@@ -215,7 +251,7 @@ public class PlatformRatioStatBolt implements IRichBolt{
 	@Override
 	public void cleanup() {
 		// TODO Auto-generated method stub
-		
+//		write2Tair();
 	}
 
 	@Override

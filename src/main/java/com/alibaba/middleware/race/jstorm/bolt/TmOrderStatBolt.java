@@ -1,7 +1,10 @@
 package com.alibaba.middleware.race.jstorm.bolt;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingDeque;
 
 import org.slf4j.Logger;
@@ -23,7 +26,12 @@ public class TmOrderStatBolt implements IRichBolt {
 	private static Logger LOG = LoggerFactory.getLogger(TmOrderStatBolt.class);
 	private OutputCollector collector;
 	private HashMap<Long, Double> orderResult = null;
-	private LinkedBlockingDeque<TairData> tairDataList = null;
+//	private LinkedBlockingDeque<TairData> tairDataList = null;
+	
+	private ConcurrentHashMap<Long, Double>dataCache = new ConcurrentHashMap<Long, Double>();;//暂时缓存要写入的数据
+//	private int count = 0;
+	private TairOperatorImpl tairOperator = null;
+	
 	//dbug
 //	private FileOutputStream out = null;
 	
@@ -33,20 +41,55 @@ public class TmOrderStatBolt implements IRichBolt {
 		this.collector = collector;
 		this.orderResult = new HashMap<Long, Double>();
 		
-		this.tairDataList = new LinkedBlockingDeque<TairData>();
+		/*this.tairDataList = new LinkedBlockingDeque<TairData>();
 		//启动一个线程专门去写tair
 		Runnable tairRunnable = new TairRunnable(this.tairDataList);
 		Thread thread = new Thread(tairRunnable);
-		thread.start();		
+		thread.start();		*/
 		
-		/*try {
-			out = new FileOutputStream("tm.out");
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}*/
+		this.tairOperator = new TairOperatorImpl(RaceConfig.TairConfigServer, RaceConfig.TairSalveConfigServer,
+                RaceConfig.TairGroup, RaceConfig.TairNamespace);
+		this.dataCache = new ConcurrentHashMap<Long, Double>();
+		
+		new Thread(new Runnable() {
+			
+			@Override
+			public void run() {
+				// TODO Auto-generated method stub
+				System.err.println("启动线程!");
+				while(true){
+					try {
+						Thread.sleep(10*1000);// 10s写一次
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					for (Entry<Long, Double> entry : dataCache.entrySet()) {
+			            long key = entry.getKey();
+			            double val = entry.getValue();
+			            System.err.println("Write: "+RaceConfig.prex_tmall+RaceConfig.TeamCode+"_"+key+","+ RaceUtils.round(val, 2));
+			            tairOperator.write(RaceConfig.prex_tmall+RaceConfig.TeamCode+"_"+key, RaceUtils.round(val, 2));
+			            //删除
+			            dataCache.remove(key);
+			        }
+				}
+				
+			}
+		}).start();
+//		this.count = 0;
 	}
-
+	
+	private void write2Tair(){
+		Iterator<Entry<Long, Double>> entries = this.dataCache.entrySet().iterator();
+		while(entries.hasNext()){
+			Map.Entry entry = (Map.Entry) entries.next();  
+			Long timestamp = (Long) entry.getKey();
+			Double amount = (Double)entry.getValue();
+			this.tairOperator.write(RaceConfig.prex_tmall+RaceConfig.TeamCode+"_"+timestamp.longValue(), RaceUtils.round(amount.doubleValue(), 2));
+			entries.remove();
+		}
+	}
+	
 	@Override
 	public void execute(Tuple input) {
 		// TODO Auto-generated method stub
@@ -57,25 +100,23 @@ public class TmOrderStatBolt implements IRichBolt {
 			newAmount += this.orderResult.get(timestamp);
 		}
 		this.orderResult.put(timestamp, newAmount);
-		
+		this.dataCache.put(timestamp, newAmount);
+		/*this.count++;
+		if(this.count >= 2000){
+			write2Tair();
+			this.count = 0;
+		}*/
 //		boolean res = this.tairOperator.write(RaceConfig.prex_tmall+RaceConfig.TeamCode+"_"+timestamp, RaceUtils.round(newAmount, 2));
-		this.tairDataList.offer(new TairData(RaceConfig.prex_tmall+RaceConfig.TeamCode+"_"+timestamp, RaceUtils.round(newAmount, 2)));
+//		this.tairDataList.offer(new TairData(RaceConfig.prex_tmall+RaceConfig.TeamCode+"_"+timestamp, RaceUtils.round(newAmount, 2)));
 		Log.info(">>>>>>["+RaceConfig.prex_tmall+RaceConfig.TeamCode+"_"+timestamp+","+newAmount+"]");
 		
-		/*try {
-			out.write(("["+RaceConfig.prex_tmall+RaceConfig.TeamCode+"_"+timestamp+","+newAmount+"]\n").getBytes());
-			out.flush();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}*/
 		this.collector.ack(input);
 	}
 
 	@Override
 	public void cleanup() {
 		// TODO Auto-generated method stub
-
+//		write2Tair();
 	}
 
 	@Override

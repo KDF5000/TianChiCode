@@ -4,8 +4,12 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,7 +18,6 @@ import com.alibaba.middleware.race.RaceConfig;
 import com.alibaba.middleware.race.RaceUtils;
 import com.alibaba.middleware.race.Tair.TairData;
 import com.alibaba.middleware.race.Tair.TairOperatorImpl;
-import com.alibaba.middleware.race.Tair.TairRunnable;
 import com.esotericsoftware.minlog.Log;
 import backtype.storm.task.OutputCollector;
 import backtype.storm.task.TopologyContext;
@@ -27,7 +30,11 @@ public class TbOrderStatBolt implements IRichBolt {
 	private OutputCollector collector;
 	
 	private HashMap<Long, Double> orderResult = null;
-	private LinkedBlockingDeque<TairData> tairDataList = null;
+//	private LinkedBlockingDeque<TairData> tairDataList = null;
+	
+	private ConcurrentHashMap<Long, Double> dataCache = null;
+	private int count = 0;
+	private TairOperatorImpl tairOperator = null;
 	
 	//debug
 //	private FileOutputStream out = null;
@@ -36,22 +43,57 @@ public class TbOrderStatBolt implements IRichBolt {
 		// TODO Auto-generated method stub
 		this.collector = collector;
 		this.orderResult = new HashMap<Long, Double>();
-		this.tairDataList = new LinkedBlockingDeque<TairData>();
+		this.dataCache = new ConcurrentHashMap<Long, Double>();
 		
+		this.count = 0;
+		this.tairOperator = new TairOperatorImpl(RaceConfig.TairConfigServer, RaceConfig.TairSalveConfigServer,
+                RaceConfig.TairGroup, RaceConfig.TairNamespace);
+		
+//		this.tairDataList = new LinkedBlockingDeque<TairData>();
+		new Thread(new Runnable() {
+			
+			@Override
+			public void run() {
+				// TODO Auto-generated method stub
+				System.err.println("启动线程!");
+				while(true){
+					try {
+						Thread.sleep(10*1000);// 10s写一次
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					for (Entry<Long, Double> entry : dataCache.entrySet()) {
+			            long key = entry.getKey();
+			            double val = entry.getValue();
+			            System.err.println("Write: "+RaceConfig.prex_taobao+RaceConfig.TeamCode+"_"+key+","+ RaceUtils.round(val, 2));
+			            tairOperator.write(RaceConfig.prex_taobao+RaceConfig.TeamCode+"_"+key, RaceUtils.round(val, 2));
+			            //删除
+			            dataCache.remove(key);
+			        }
+				}
+
+			}
+		}).start();
+		/*
 		//启动一个线程专门去写tair
 		Runnable tairRunnable = new TairRunnable(this.tairDataList);
 		Thread thread = new Thread(tairRunnable);
-		thread.start();
-		
-		/*try {
-			out = new FileOutputStream("tb.out");
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}*/
+		thread.start();*/
 		
 	}
 
+	private void write2Tair(){
+		Iterator<Entry<Long, Double>> entries = this.dataCache.entrySet().iterator();
+		while(entries.hasNext()){
+			Map.Entry entry = (Map.Entry) entries.next();  
+			Long timestamp = (Long) entry.getKey();
+			Double amount = (Double)entry.getValue();
+			this.tairOperator.write(RaceConfig.prex_taobao+RaceConfig.TeamCode+"_"+timestamp.longValue(), RaceUtils.round(amount.doubleValue(), 2));
+			entries.remove();
+		}
+	}
+	
 	@Override
 	public void execute(Tuple input) {
 		// TODO Auto-generated method stub
@@ -62,26 +104,23 @@ public class TbOrderStatBolt implements IRichBolt {
 			newAmount += this.orderResult.get(timestamp);
 		}
 		this.orderResult.put(timestamp, newAmount);
-
-//		boolean res = this.tairOperator.write(RaceConfig.prex_taobao+RaceConfig.TeamCode+"_"+timestamp, RaceUtils.round(newAmount, 2));
+		this.dataCache.put(timestamp, newAmount);
 		
-		this.tairDataList.offer(new TairData(RaceConfig.prex_taobao+RaceConfig.TeamCode+"_"+timestamp, RaceUtils.round(newAmount, 2)));
-		Log.info(">>>>>>["+RaceConfig.prex_taobao+RaceConfig.TeamCode+"_"+timestamp+","+newAmount+"]");
-		
-		/*try {
-			out.write(("["+RaceConfig.prex_taobao+RaceConfig.TeamCode+"_"+timestamp+","+newAmount+"]\n").getBytes());
-			out.flush();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		/*this.count++;
+		if(this.count >= 2000){
+			write2Tair();
+			this.count = 0;
 		}*/
+		//boolean res = this.tairOperator.write(RaceConfig.prex_taobao+RaceConfig.TeamCode+"_"+timestamp, RaceUtils.round(newAmount, 2));
+		//this.tairDataList.offer(new TairData(RaceConfig.prex_taobao+RaceConfig.TeamCode+"_"+timestamp, RaceUtils.round(newAmount, 2)));
+		Log.info(">>>>>>["+RaceConfig.prex_taobao+RaceConfig.TeamCode+"_"+timestamp+","+newAmount+"]");
 		this.collector.ack(input);
 	}
 
 	@Override
 	public void cleanup() {
 		// TODO Auto-generated method stub
-
+//		write2Tair();
 	}
 
 	@Override

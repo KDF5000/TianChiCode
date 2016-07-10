@@ -1,9 +1,16 @@
 package com.alibaba.middleware.race.jstorm.bolt;
+/*package com.alibaba.middleware.race.jstorm.bolt;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
+
+import com.alibaba.middleware.race.RaceConfig;
+import com.alibaba.middleware.race.Tair.TairOperatorImpl;
 import com.alibaba.middleware.race.model.DataTuple;
+import com.esotericsoftware.minlog.Log;
+
 import backtype.storm.task.OutputCollector;
 import backtype.storm.task.TopologyContext;
 import backtype.storm.topology.IRichBolt;
@@ -29,14 +36,14 @@ public class OrderPayBolt implements IRichBolt {
 	private static final long serialVersionUID = 138293829842L;
     private OutputCollector collector;
     private HashMap<Long, OrderType> orderTypeMap = null;
-    private HashMap<Long, LinkedList<PayMsg>> unemitPayIndex = null;
+    private LinkedList<PayMsg> unemitPayMsg = null;
     
 	@Override
 	public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
 		// TODO Auto-generated method stub
 		this.collector = collector;
 		this.orderTypeMap = new HashMap<Long, OrderType>();
-		this.unemitPayIndex = new HashMap<Long, LinkedList<PayMsg>>();
+		this.unemitPayMsg = new LinkedList<PayMsg>();
 	}
 
 	@Override
@@ -50,26 +57,24 @@ public class OrderPayBolt implements IRichBolt {
 		
 		if(type == DataTuple.MQ_TMALL_ORDER || type == DataTuple.MQ_TAOBAO_ORDER){
 			//放到hashmap里
-			OrderType newOrderType = new OrderType();
-			newOrderType.type = type;
-			newOrderType.remainPrice = amount;
+			OrderType orderType = new OrderType();
+			orderType.type = type;
+			orderType.remainPrice = amount;
 			
 			if(!this.orderTypeMap.containsKey(orderId)){
 				//查询带消费队列看看是否存在该orderid的消息
-				if(this.unemitPayIndex.containsKey(orderId)){
-					LinkedList<PayMsg> list = this.unemitPayIndex.get(orderId);
-					for(int i=0;i<list.size();i++){
-						PayMsg payMsg = list.get(i);
-						newOrderType.remainPrice -= payMsg.amount;
-						list.remove(i);
+				for(int i=0;i<this.unemitPayMsg.size();i++){
+					PayMsg payMsg = this.unemitPayMsg.get(i);
+					if(payMsg.orderId == orderId){
+						orderType.remainPrice -= payMsg.amount;
+						this.unemitPayMsg.remove(i);
 						i--;//移除了一个元素所以要回退
 //						System.err.println("<<<<<Emit:"+"[order_stat_"+orderType.type+","+payMsg.timestamp+","+ payMsg.amount+"]");
-						this.collector.emit("order_stat_"+newOrderType.type, new Values(payMsg.timestamp, payMsg.amount));
+						this.collector.emit("order_stat_"+orderType.type, new Values(payMsg.timestamp, payMsg.amount));
 					}
-					
 				}
-				if(newOrderType.remainPrice > 0){
-					this.orderTypeMap.put(orderId, newOrderType);
+				if(orderType.remainPrice > 0){
+					this.orderTypeMap.put(orderId, orderType);
 				}
 			}else{
 				//原则上order没有重复的
@@ -92,15 +97,7 @@ public class OrderPayBolt implements IRichBolt {
 				payMsg.orderId = orderId;
 				payMsg.amount = amount;
 				payMsg.timestamp = timestamp;
-				
-				LinkedList<PayMsg> list = null;
-				if(this.unemitPayIndex.containsKey(orderId)){
-					list = this.unemitPayIndex.get(orderId);
-				}else{
-					list = new LinkedList<PayMsg>();
-				}
-				list.add(payMsg);
-				this.unemitPayIndex.put(orderId, list);
+				this.unemitPayMsg.add(payMsg);
 			}
 		}
 		this.collector.ack(input);
@@ -125,3 +122,4 @@ public class OrderPayBolt implements IRichBolt {
 	}
 
 }
+*/
