@@ -52,7 +52,7 @@ public class RaceTopology {
       //通过是否有参数来控制是否启动集群，或者本地模式执行
 //        if(args != null && args.length > 0) {
             try {
-                config.setNumWorkers(2);
+                config.setNumWorkers(3);
                 StormSubmitter.submitTopology(topologyName, config,
                         builder.createTopology());
             } catch (Exception e) {
