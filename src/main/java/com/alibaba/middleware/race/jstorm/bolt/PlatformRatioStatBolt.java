@@ -72,7 +72,7 @@ public class PlatformRatioStatBolt implements IRichBolt{
 				System.err.println("启动线程!");
 				while(true){
 					try {
-						Thread.sleep(12*1000);// 10s写一次
+						Thread.sleep(10*1000);// 10s写一次
 					} catch (InterruptedException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
