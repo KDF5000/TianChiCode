@@ -30,23 +30,23 @@ public class RaceConfig implements Serializable {
     /****本地****/
     
     /********Race ********/
-    /*public static String TeamCode = "429038utrh";
+    public static String TeamCode = "429038utrh";
     public static String JstormTopologyName = "429038utrh";
     public static String MetaConsumerGroup = "429038utrh";
     public static String TairConfigServer = "10.101.72.127:5198";
     public static String TairSalveConfigServer = "10.101.72.128:5198";
     public static String TairGroup = "group_tianchi";
-    public static Integer TairNamespace = 40652;*/
+    public static Integer TairNamespace = 40652;
     /*******Race ********/
     
     /********Wang ********/
-    public static String TeamCode = "46440tsy6h";
+    /*public static String TeamCode = "46440tsy6h";
     public static String JstormTopologyName = "46440tsy6h";
     public static String MetaConsumerGroup = "46440tsy6h";
     public static String TairConfigServer = "10.101.72.127:5198";
     public static String TairSalveConfigServer = "10.101.72.128:5198";
     public static String TairGroup = "group_tianchi";
-    public static Integer TairNamespace = 41511;
+    public static Integer TairNamespace = 41511;*/
     /********Wang ********/
     
     /********Yang De ********/
