@@ -174,10 +174,15 @@ public class Producer {
      * @throws InterruptedException
      */
     public static void main(String[] args) throws MQClientException, InterruptedException {
+    	//指定生成条数
+    	if(args != null && args.length > 0){
+    		count = Integer.valueOf(args[0]);
+    	}
+    	
         DefaultMQProducer producer = new DefaultMQProducer("429038utrh");
 
         //在本地搭建好broker后,记得指定nameServer的地址
-        producer.setNamesrvAddr("172.16.2.129:9876");
+        producer.setNamesrvAddr(RaceConfig.MqNameServer);
 
         producer.start();
 
@@ -263,6 +268,6 @@ public class Producer {
         producer.shutdown();
         System.out.println("开始计算数据...");
         Producer.printOrderResult();
-        Producer.printRatio();
+//        Producer.printRatio();
     }
 }

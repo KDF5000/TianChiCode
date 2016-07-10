@@ -16,7 +16,7 @@ public class CheckTair {
 	public static TairOperatorImpl tairOperator = new TairOperatorImpl(RaceConfig.TairConfigServer, RaceConfig.TairSalveConfigServer,
             RaceConfig.TairGroup, RaceConfig.TairNamespace);
 	
-	//[platformTaobao_429038utrh_1468056360,1.26913586E7]
+//	[platformTaobao_429038utrh_1468056360,1.26913586E7]
 	public static void checkLine(String line){
 		int len = line.length();
 		String []data = line.substring(1, len-1).split(",");

@@ -1,28 +1,20 @@
 package com.alibaba.middleware.race.jstorm.bolt;
 
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.security.Timestamp;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.LinkedBlockingDeque;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.alibaba.middleware.race.RaceConfig;
 import com.alibaba.middleware.race.RaceUtils;
-import com.alibaba.middleware.race.Tair.TairData;
 import com.alibaba.middleware.race.Tair.TairOperatorImpl;
-import com.alibaba.middleware.race.Tair.TairRunnable;
 import com.esotericsoftware.minlog.Log;
 
-import backtype.storm.generated.MetricWindow;
 import backtype.storm.task.OutputCollector;
 import backtype.storm.task.TopologyContext;
 import backtype.storm.topology.IRichBolt;
@@ -80,7 +72,7 @@ public class PlatformRatioStatBolt implements IRichBolt{
 				System.err.println("启动线程!");
 				while(true){
 					try {
-						Thread.sleep(10*1000);// 10s写一次
+						Thread.sleep(25*1000);// 10s写一次
 					} catch (InterruptedException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
@@ -88,7 +80,7 @@ public class PlatformRatioStatBolt implements IRichBolt{
 					for (Entry<Long, Double> entry : dataCache.entrySet()) {
 			            long key = entry.getKey();
 			            double val = entry.getValue();
-			            System.err.println("Write: "+RaceConfig.prex_ratio+RaceConfig.TeamCode+"_"+key+","+ val);
+//			            System.err.println("Write: "+RaceConfig.prex_ratio+RaceConfig.TeamCode+"_"+key+","+ val);
 			            tairOperator.write(RaceConfig.prex_ratio+RaceConfig.TeamCode+"_"+key, val);
 			            //删除
 			            dataCache.remove(key);

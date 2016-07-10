@@ -18,15 +18,15 @@ public class RaceConfig implements Serializable {
     public static String MqTaobaoTradeTopic = "MiddlewareRaceTestData_TBOrder";
     
     /****本地****/
-   /* public static String TeamCode = "429038utrh";
+    /*public static String TeamCode = "429038utrh";
     public static String JstormTopologyName = "429038utrh";
     public static String MetaConsumerGroup = "429038utrh";
     public static String TairConfigServer = "172.16.2.128:5198";
     public static String TairSalveConfigServer = "172.16.2.128:5198";
     public static String TairGroup = "group_1";
-    public static Integer TairNamespace = 0;
+    public static Integer TairNamespace = 0;*/
     //rocketmq server
-    public static String MqNameServer = "172.16.2.129:9876";*/
+    public static String MqNameServer = "172.16.2.129:9876";
     /****本地****/
     
     /********Race ********/
@@ -46,7 +46,7 @@ public class RaceConfig implements Serializable {
     public static String TairConfigServer = "10.101.72.127:5198";
     public static String TairSalveConfigServer = "10.101.72.128:5198";
     public static String TairGroup = "group_tianchi";
-    public static Integer TairNamespace = 41511;   
+    public static Integer TairNamespace = 41511;
     /********Wang ********/
     
     /********Yang De ********/

@@ -1,10 +1,7 @@
 package com.alibaba.middleware.race.jstorm.bolt;
 
-import java.io.File;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.Map;
-import com.alibaba.middleware.race.model.DataTuple;
 import backtype.storm.task.OutputCollector;
 import backtype.storm.task.TopologyContext;
 import backtype.storm.topology.IRichBolt;
