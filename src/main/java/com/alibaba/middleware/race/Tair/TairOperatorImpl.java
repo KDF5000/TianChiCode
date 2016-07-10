@@ -5,9 +5,6 @@ import com.taobao.tair.DataEntry;
 import com.taobao.tair.Result;
 import com.taobao.tair.ResultCode;
 import com.taobao.tair.impl.DefaultTairManager;
-
-import backtype.storm.tuple.Values;
-
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
